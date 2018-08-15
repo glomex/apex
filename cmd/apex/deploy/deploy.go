@@ -3,7 +3,6 @@ package deploy
 
 import (
 	"fmt"
-
 	"github.com/tj/cobra"
 
 	"github.com/glomex/apex/cmd/apex/root"
