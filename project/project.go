@@ -439,8 +439,9 @@ func (p *Project) name(fn *function.Function) (string, error) {
 
 // checkRole
 func (p *Project) checkRole() bool {
+	funcName := fmt.Sprintf("%s_lambda_functions", p.Name)
 	input := &iam.GetRoleInput{
-		RoleName: aws.String(p.Name + '_lambda_functions'),
+		RoleName: aws.String(funcName),
 	}
 	p.Log.Info(input)
 	return true
