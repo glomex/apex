@@ -24,6 +24,7 @@ import (
 	"github.com/glomex/apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
 	//"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 const (
@@ -438,10 +439,10 @@ func (p *Project) name(fn *function.Function) (string, error) {
 
 // checkRole
 func (p *Project) checkRole() bool {
-	//input := &iam.GetRoleInput{
-	//	RoleName: aws.String(),
-	//}
-	p.Log.Info(p.Name)
+	input := &iam.GetRoleInput{
+		RoleName: aws.String(p.Name + '_lambda_functions'),
+	}
+	p.Log.Info(input)
 	return true
 }
 
