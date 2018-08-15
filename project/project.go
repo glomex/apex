@@ -182,6 +182,7 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 func (p *Project) DeployAndClean() error {
 	//p.Log.Info(p.Name)
 	//p.Log.Info(p.readInfraRole())
+	p.checkRole()
 	if err := p.Deploy(); err != nil {
 		return err
 	}
