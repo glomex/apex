@@ -195,7 +195,7 @@ func (p *Project) DeployAndClean() error {
 
 // checkRole
 func (p *Project) checkRole() bool {
-	funcName := fmt.Sprintf("%s_lambda_functions", p.Name)
+	funcName := fmt.Sprintf("%s_lambda_function", p.Name)
 	input := &iam.GetRoleInput{
 		RoleName: aws.String(funcName),
 	}
