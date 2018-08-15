@@ -23,7 +23,7 @@ import (
 	"github.com/glomex/apex/utils"
 	"github.com/glomex/apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/iam"
+	//"github.com/aws/aws-sdk-go/service/iam"
 )
 
 const (
@@ -180,8 +180,8 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 
 // DeployAndClean deploys functions and then cleans up their build artifacts.
 func (p *Project) DeployAndClean() error {
-	p.Log.Info(p.Role)
-	p.Log.Info(p.readInfraRole())
+	//p.Log.Info(p.Name)
+	//p.Log.Info(p.readInfraRole())
 	if err := p.Deploy(); err != nil {
 		return err
 	}
@@ -441,6 +441,7 @@ func (p *Project) checkRole() bool {
 	//	RoleName: aws.String(),
 	//}
 	p.Log.Info(p.Name)
+	return true
 }
 
 
