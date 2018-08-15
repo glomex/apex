@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
-
 	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -223,6 +222,7 @@ func (p *Project) DeployAndClean() error {
 			fmt.Println("Create role faled! Exiting!")
 			os.Exit(1)
 		}
+		time.sleep(60)
 	}
 	if err := p.Deploy(); err != nil {
 		return err
