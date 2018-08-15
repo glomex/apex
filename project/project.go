@@ -17,7 +17,7 @@ import (
 	"github.com/tj/go-sync/semaphore"
 	"gopkg.in/validator.v2"
 
-	"github.com/apex/apex/function"
+	"github.com/glomex/apex/function"
 	"github.com/apex/apex/hooks"
 	"github.com/apex/apex/infra"
 	"github.com/apex/apex/utils"

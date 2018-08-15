@@ -4,7 +4,7 @@ package python
 import (
 	"strings"
 
-	"github.com/apex/apex/function"
+	"github.com/glomex/apex/function"
 )
 
 func init() {

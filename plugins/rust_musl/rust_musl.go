@@ -3,8 +3,8 @@ package rust_musl
 
 import (
 	"fmt"
-	"github.com/apex/apex/function"
-	"github.com/apex/apex/plugins/nodejs"
+	"github.com/glomex/apex/function"
+	"github.com/glomex/apex/plugins/nodejs"
 	"strings"
 )
 

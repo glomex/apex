@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apex/apex/function"
-	"github.com/apex/apex/plugins/golang"
-	"github.com/apex/apex/plugins/java"
-	"github.com/apex/apex/plugins/nodejs"
-	"github.com/apex/apex/plugins/python"
+	"github.com/glomex/apex/function"
+	"github.com/glomex/apex/plugins/golang"
+	"github.com/glomex/apex/plugins/java"
+	"github.com/glomex/apex/plugins/nodejs"
+	"github.com/glomex/apex/plugins/python"
 )
 
 func init() {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/apex/apex/function"
+	"github.com/glomex/apex/function"
 	"github.com/apex/log"
 )
 

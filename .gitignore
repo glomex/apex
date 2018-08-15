@@ -5,3 +5,4 @@ cov.out
 node_modules
 vendor/
 .envrc
+.idea

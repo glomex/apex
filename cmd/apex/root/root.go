@@ -10,9 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tj/cobra"
 
-	"github.com/apex/apex/dryrun"
-	"github.com/apex/apex/project"
-	"github.com/apex/apex/utils"
+	"github.com/glomex/apex/dryrun"
+	"github.com/glomex/apex/project"
+	"github.com/glomex/apex/utils"
 )
 
 // environment for project.
