@@ -180,6 +180,7 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 // DeployAndClean deploys functions and then cleans up their build artifacts.
 func (p *Project) DeployAndClean() error {
 	p.Log.Info(p.Role)
+	p.Log.Info(readInfraRole())
 	if err := p.Deploy(); err != nil {
 		return err
 	}
