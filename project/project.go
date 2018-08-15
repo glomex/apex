@@ -39,6 +39,34 @@ const (
 
 	// functions directory
 	functionsDir = "functions"
+
+	var iamAssumeRolePolicy = `{
+  		"Version": "2012-10-17",
+		"Statement": [
+    	{
+      		"Effect": "Allow",
+      		"Principal": {
+			"Service": "lambda.amazonaws.com"
+      	},
+      	"Action": "sts:AssumeRole"
+    	}
+  		]
+	}`
+
+	var iamLogsPolicy = `{
+	  "Version": "2012-10-17",
+      "Statement": [
+      {
+      	"Action": [
+        	"logs:*"
+      	],
+      	"Effect": "Allow",
+      	"Resource": "*"
+      }
+  	]
+   }`
+
+
 )
 
 // Config for project.
@@ -76,6 +104,9 @@ type Project struct {
 	Session			 *session.Session
 
 }
+
+
+
 
 // defaults applies configuration defaults.
 func (p *Project) defaults() {
@@ -187,7 +218,11 @@ func (p *Project) DeployAndClean() error {
 	//p.Log.Info(p.readInfraRole())
 	if !p.checkRole() {
 		fmt.Println("Role not found, create it")
-		os.Exit(1)
+		err := p.createRole()
+		if err != nil {
+			fmt.Println("Create role faled! Exiting!")
+			os.Exit(1)
+		}
 	}
 	if err := p.Deploy(); err != nil {
 		return err
@@ -196,11 +231,11 @@ func (p *Project) DeployAndClean() error {
 	return p.Clean()
 }
 
-// checkRole
+// check is Role exists
 func (p *Project) checkRole() bool {
-	funcName := fmt.Sprintf("%s_lambda_function", p.Name)
+	roleName := fmt.Sprintf("%s_lambda_function", p.Name)
 	input := &iam.GetRoleInput{
-		RoleName: aws.String(funcName),
+		RoleName: aws.String(roleName),
 	}
 	svc := iam.New(p.Session)
 	_, err := svc.GetRole(input)
@@ -211,6 +246,45 @@ func (p *Project) checkRole() bool {
 	//fmt.Println(input)
 	//fmt.Println(result)
 	return true
+}
+
+// create role
+func (p *Project) createRole() error {
+	roleName := fmt.Sprintf("%s_lambda_function", p.name)
+	policyName := fmt.Sprintf("%s_lambda_logs", p.name)
+	svc := iam.New(p.Session)
+	logf("creating IAM %s role", roleName)
+	_, err := svc.CreateRole(&iam.CreateRoleInput{
+		RoleName:                 &roleName,
+		AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
+	})
+
+	if err != nil {
+		return fmt.Errorf("creating role: %s", err)
+	}
+
+	logf("creating IAM %s policy", policyName)
+	policy, err := svc.CreatePolicy(&iam.CreatePolicyInput{
+		PolicyName:     &policyName,
+		Description:    aws.String("Allow lambda_function to utilize CloudWatchLogs. Created by apex(1)."),
+		PolicyDocument: aws.String(iamLogsPolicy),
+	})
+
+	if err != nil {
+		return fmt.Errorf("creating policy: %s", err)
+	}
+
+	logf("attaching policy to lambda_function role.")
+	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
+		RoleName:  &roleName,
+		PolicyArn: policy.Policy.Arn,
+	})
+
+	if err != nil {
+		return fmt.Errorf("creating policy: %s", err)
+	}
+
+	return nil
 }
 
 
@@ -525,4 +599,9 @@ func matches(name string, patterns []string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// logf outputs a log message.
+func logf(s string, v ...interface{}) {
+	fmt.Printf("  \033[34m[+]\033[0m %s\n", fmt.Sprintf(s, v...))
 }
