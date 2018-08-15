@@ -439,7 +439,7 @@ func (p *Project) readInfraRole() string {
 		p.Log.Debugf("couldn't read role from infrastructure: %s", err)
 		return ""
 	}
-
+	p.Log.Info(role)
 	return role
 }
 
