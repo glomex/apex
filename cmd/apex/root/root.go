@@ -176,7 +176,7 @@ func Prepare(c *cobra.Command, args []string) error {
 		InfraEnvironment: environment,
 		Log:              log.Log,
 		Path:             ".",
-		Session:   		Session
+		Session:   		Session,
 	}
 
 	if dryRun {
