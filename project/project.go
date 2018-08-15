@@ -24,6 +24,7 @@ import (
 	"github.com/glomex/apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 const (
@@ -72,6 +73,7 @@ type Project struct {
 	Functions        []*function.Function
 	IgnoreFile       []byte
 	nameTemplate     *template.Template
+	Session			 *session.Session
 
 }
 
@@ -190,6 +192,38 @@ func (p *Project) DeployAndClean() error {
 
 	return p.Clean()
 }
+
+// checkRole
+func (p *Project) checkRole() bool {
+	funcName := fmt.Sprintf("%s_lambda_functions", p.Name)
+	input := &iam.GetRoleInput{
+		RoleName: aws.String(funcName),
+	}
+	svc := iam.New(p.Session)
+	result, _ := svc.GetRole(input)
+	//if err != nil {
+	//	if aerr, ok := err.(awserr.Error); ok {
+	//		switch aerr.Code() {
+	//		case iam.ErrCodeNoSuchEntityException:
+	//			fmt.Println(iam.ErrCodeNoSuchEntityException, aerr.Error())
+	//		case iam.ErrCodeServiceFailureException:
+	//			fmt.Println(iam.ErrCodeServiceFailureException, aerr.Error())
+	//		default:
+	//			fmt.Println(aerr.Error())
+	//		}
+	//	} else {
+	//		// Print the error, cast err to awserr.Error to get the Code and
+	//		// Message from an error.
+	//		fmt.Println(err.Error())
+	//	}
+	//	return false
+	//}
+
+	fmt.Println(input)
+	fmt.Println(result)
+	return true
+}
+
 
 // Deploy functions and their configurations.
 func (p *Project) Deploy() error {
@@ -435,37 +469,6 @@ func (p *Project) name(fn *function.Function) (string, error) {
 	}
 
 	return name, nil
-}
-
-// checkRole
-func (p *Project) checkRole() bool {
-	funcName := fmt.Sprintf("%s_lambda_functions", p.Name)
-	input := &iam.GetRoleInput{
-		RoleName: aws.String(funcName),
-	}
-	//svc := iam.New(root.Session)
-	//result, err := svc.GetRole(input)
-	//if err != nil {
-	//	if aerr, ok := err.(awserr.Error); ok {
-	//		switch aerr.Code() {
-	//		case iam.ErrCodeNoSuchEntityException:
-	//			fmt.Println(iam.ErrCodeNoSuchEntityException, aerr.Error())
-	//		case iam.ErrCodeServiceFailureException:
-	//			fmt.Println(iam.ErrCodeServiceFailureException, aerr.Error())
-	//		default:
-	//			fmt.Println(aerr.Error())
-	//		}
-	//	} else {
-	//		// Print the error, cast err to awserr.Error to get the Code and
-	//		// Message from an error.
-	//		fmt.Println(err.Error())
-	//	}
-	//	return false
-	//}
-
-	fmt.Println(input)
-	//fmt.Println(result)
-	return true
 }
 
 

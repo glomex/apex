@@ -12,6 +12,7 @@ import (
 
 	"github.com/glomex/apex/dryrun"
 	"github.com/glomex/apex/project"
+	//"apex/project"
 	"github.com/glomex/apex/utils"
 )
 
@@ -175,6 +176,7 @@ func Prepare(c *cobra.Command, args []string) error {
 		InfraEnvironment: environment,
 		Log:              log.Log,
 		Path:             ".",
+		Session:   		Session
 	}
 
 	if dryRun {
