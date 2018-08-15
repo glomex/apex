@@ -18,10 +18,10 @@ import (
 	"gopkg.in/validator.v2"
 
 	"github.com/glomex/apex/function"
-	"github.com/apex/apex/hooks"
-	"github.com/apex/apex/infra"
-	"github.com/apex/apex/utils"
-	"github.com/apex/apex/vpc"
+	"github.com/glomex/apex/hooks"
+	"github.com/glomex/apex/infra"
+	"github.com/glomex/apex/utils"
+	"github.com/glomex/apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
 )
 
