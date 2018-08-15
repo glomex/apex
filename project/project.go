@@ -23,6 +23,7 @@ import (
 	"github.com/glomex/apex/utils"
 	"github.com/glomex/apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 const (
@@ -433,6 +434,16 @@ func (p *Project) name(fn *function.Function) (string, error) {
 
 	return name, nil
 }
+
+// checkRole
+func (p *Project) checkRole() bool {
+	//input := &iam.GetRoleInput{
+	//	RoleName: aws.String(),
+	//}
+	p.Log.Info(p.Functions)
+}
+
+
 
 // readInfraRole reads lambda function IAM role from infrastructure
 func (p *Project) readInfraRole() string {
