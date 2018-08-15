@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"time"
 )
 
 const (
@@ -222,7 +223,7 @@ func (p *Project) DeployAndClean() error {
 			fmt.Println("Create role faled! Exiting!")
 			os.Exit(1)
 		}
-		time.sleep(60)
+		time.Sleep(60)
 	}
 	if err := p.Deploy(); err != nil {
 		return err
