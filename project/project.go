@@ -203,7 +203,7 @@ func (p *Project) checkRole() bool {
 		RoleName: aws.String(funcName),
 	}
 	svc := iam.New(p.Session)
-	result, err := svc.GetRole(input)
+	_, err := svc.GetRole(input)
 	if err != nil {
 		return false
 	}
