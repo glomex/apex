@@ -23,8 +23,8 @@ import (
 	"github.com/glomex/apex/utils"
 	"github.com/glomex/apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
-	//"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 )
 
 const (
@@ -73,6 +73,8 @@ type Project struct {
 	Functions        []*function.Function
 	IgnoreFile       []byte
 	nameTemplate     *template.Template
+	IAM    iamiface.IAMAPI
+	Region string
 }
 
 // defaults applies configuration defaults.
@@ -443,7 +445,8 @@ func (p *Project) checkRole() bool {
 	input := &iam.GetRoleInput{
 		RoleName: aws.String(funcName),
 	}
-	p.Log.Info(input)
+	result, _ := p.IAM.GetRole(input)
+	fmt.Println(result)
 	return true
 }
 
