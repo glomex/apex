@@ -440,7 +440,7 @@ func (p *Project) checkRole() bool {
 	//input := &iam.GetRoleInput{
 	//	RoleName: aws.String(),
 	//}
-	p.Log.Info(p.Functions)
+	p.Log.Info(p.Name)
 }
 
 
