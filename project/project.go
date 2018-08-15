@@ -185,7 +185,10 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 func (p *Project) DeployAndClean() error {
 	//p.Log.Info(p.Name)
 	//p.Log.Info(p.readInfraRole())
-	p.checkRole()
+	if !p.checkRole() {
+		fmt.Println("Role not found, create it")
+		os.Exit(1)
+	}
 	if err := p.Deploy(); err != nil {
 		return err
 	}
@@ -202,25 +205,11 @@ func (p *Project) checkRole() bool {
 	svc := iam.New(p.Session)
 	result, err := svc.GetRole(input)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case iam.ErrCodeNoSuchEntityException:
-				fmt.Println(iam.ErrCodeNoSuchEntityException, aerr.Error())
-			case iam.ErrCodeServiceFailureException:
-				fmt.Println(iam.ErrCodeServiceFailureException, aerr.Error())
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
-		}
 		return false
 	}
 
-	fmt.Println(input)
-	fmt.Println(result)
+	//fmt.Println(input)
+	//fmt.Println(result)
 	return true
 }
 
