@@ -250,8 +250,8 @@ func (p *Project) checkRole() bool {
 
 // create role
 func (p *Project) createRole() error {
-	roleName := fmt.Sprintf("%s_lambda_function", p.name)
-	policyName := fmt.Sprintf("%s_lambda_logs", p.name)
+	roleName := fmt.Sprintf("%s_lambda_function", p.Name)
+	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
 	svc := iam.New(p.Session)
 	logf("creating IAM %s role", roleName)
 	_, err := svc.CreateRole(&iam.CreateRoleInput{
