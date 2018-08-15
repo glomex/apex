@@ -40,7 +40,7 @@ const (
 	// functions directory
 	functionsDir = "functions"
 
-	var iamAssumeRolePolicy = `{
+	iamAssumeRolePolicy = `{
   		"Version": "2012-10-17",
 		"Statement": [
     	{
@@ -53,7 +53,7 @@ const (
   		]
 	}`
 
-	var iamLogsPolicy = `{
+	iamLogsPolicy = `{
 	  "Version": "2012-10-17",
       "Statement": [
       {
