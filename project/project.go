@@ -223,7 +223,7 @@ func (p *Project) DeployAndClean() error {
 			fmt.Println("Create role faled! Exiting!")
 			os.Exit(1)
 		}
-		time.Sleep(60)
+		time.Sleep(60 * time.Second)
 	}
 	if err := p.Deploy(); err != nil {
 		return err
