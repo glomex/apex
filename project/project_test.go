@@ -3,17 +3,17 @@ package project_test
 import (
 	"testing"
 
-	"github.com/glomex/apex/project"
+	"apex/project"
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/discard"
 	"github.com/stretchr/testify/assert"
 
-	_ "github.com/glomex/apex/plugins/golang"
-	_ "github.com/glomex/apex/plugins/hooks"
-	_ "github.com/glomex/apex/plugins/inference"
-	_ "github.com/glomex/apex/plugins/nodejs"
-	_ "github.com/glomex/apex/plugins/python"
-	_ "github.com/glomex/apex/plugins/shim"
+	_ "apex/plugins/golang"
+	_ "apex/plugins/hooks"
+	_ "apex/plugins/inference"
+	_ "apex/plugins/nodejs"
+	_ "apex/plugins/python"
+	_ "apex/plugins/shim"
 )
 
 func init() {

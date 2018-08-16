@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/glomex/apex/function"
+	"apex/function"
 	"github.com/apex/log"
 )
 

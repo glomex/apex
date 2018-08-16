@@ -4,7 +4,7 @@ package nodejs
 import (
 	"strings"
 
-	"github.com/glomex/apex/function"
+	"apex/function"
 )
 
 const (

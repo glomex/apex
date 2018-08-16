@@ -9,8 +9,8 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/tj/cobra"
 
-	"github.com/glomex/apex/cmd/apex/root"
-	doc "github.com/glomex/apex/docs"
+	"apex/cmd/apex/root"
+	doc "apex/docs"
 )
 
 // Command config.

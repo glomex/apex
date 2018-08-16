@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	_ "github.com/glomex/apex/plugins/golang"
-	_ "github.com/glomex/apex/plugins/hooks"
-	_ "github.com/glomex/apex/plugins/inference"
-	_ "github.com/glomex/apex/plugins/nodejs"
-	_ "github.com/glomex/apex/plugins/python"
-	_ "github.com/glomex/apex/plugins/shim"
+	_ "apex/plugins/golang"
+	_ "apex/plugins/hooks"
+	_ "apex/plugins/inference"
+	_ "apex/plugins/nodejs"
+	_ "apex/plugins/python"
+	_ "apex/plugins/shim"
 
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/discard"
@@ -19,9 +19,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/glomex/apex/function"
-	"github.com/glomex/apex/mock"
-	"github.com/glomex/apex/utils"
+	"apex/function"
+	"apex/mock"
+	"apex/utils"
 )
 
 func init() {

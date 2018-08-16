@@ -12,7 +12,7 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/tj/cobra"
 
-	"github.com/glomex/apex/cmd/apex/root"
+	"apex/cmd/apex/root"
 )
 
 // alias.

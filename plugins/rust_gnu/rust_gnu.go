@@ -3,8 +3,8 @@ package rust_gnu
 
 import (
 	"fmt"
-	"github.com/glomex/apex/function"
-	"github.com/glomex/apex/plugins/nodejs"
+	"apex/function"
+	"apex/plugins/nodejs"
 	"strings"
 )
 

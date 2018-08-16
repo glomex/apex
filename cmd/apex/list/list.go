@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/tj/cobra"
 
-	"github.com/glomex/apex/cmd/apex/root"
-	"github.com/glomex/apex/colors"
+	"apex/cmd/apex/root"
+	"apex/colors"
 )
 
 // tfvars output format.

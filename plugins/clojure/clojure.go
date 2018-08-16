@@ -9,8 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/glomex/apex/archive"
-	"github.com/glomex/apex/function"
+	"apex/archive"
+	"apex/function"
 )
 
 func init() {

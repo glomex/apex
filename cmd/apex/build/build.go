@@ -9,8 +9,8 @@ import (
 
 	"github.com/tj/cobra"
 
-	"github.com/glomex/apex/cmd/apex/root"
-	"github.com/glomex/apex/utils"
+	"apex/cmd/apex/root"
+	"apex/utils"
 )
 
 // name of function.

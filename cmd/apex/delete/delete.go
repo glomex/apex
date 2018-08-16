@@ -7,7 +7,7 @@ import (
 	"github.com/tj/cobra"
 	"github.com/tj/go-prompt"
 
-	"github.com/glomex/apex/cmd/apex/root"
+	"apex/cmd/apex/root"
 )
 
 // Force deletion.

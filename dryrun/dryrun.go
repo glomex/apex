@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dustin/go-humanize"
 
-	"github.com/glomex/apex/utils"
+	"apex/utils"
 )
 
 const (

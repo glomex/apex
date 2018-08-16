@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/tj/cobra"
 
-	"github.com/glomex/apex/cmd/apex/root"
-	"github.com/glomex/apex/logs"
+	"apex/cmd/apex/root"
+	"apex/logs"
 )
 
 // filter pattern.

@@ -12,7 +12,7 @@ import (
 	"github.com/golang-commonmark/markdown"
 	"github.com/mitchellh/go-wordwrap"
 
-	"github.com/glomex/apex/colors"
+	"apex/colors"
 )
 
 // page of documentation.

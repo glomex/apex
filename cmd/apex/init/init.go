@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/tj/cobra"
 
-	"github.com/glomex/apex/boot"
-	"github.com/glomex/apex/cmd/apex/root"
+	"apex/boot"
+	"apex/cmd/apex/root"
 )
 
 var credentialsError = `

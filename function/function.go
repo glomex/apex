@@ -23,10 +23,10 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/validator.v2"
 
-	"github.com/glomex/apex/archive"
-	"github.com/glomex/apex/hooks"
-	"github.com/glomex/apex/utils"
-	"github.com/glomex/apex/vpc"
+	"apex/archive"
+	"apex/hooks"
+	"apex/utils"
+	"apex/vpc"
 )
 
 // timelessInfo is used to zero mtime which causes function checksums
