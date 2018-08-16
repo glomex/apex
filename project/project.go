@@ -282,7 +282,7 @@ func (p *Project) createRole() error {
 
 	logf("attaching policy to lambda_function role.")
 	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
-		RoleName:  &roleName,
+		RoleName:  &splittedRole[len(splittedRole)-1],
 		PolicyArn: policy.Policy.Arn,
 	})
 
