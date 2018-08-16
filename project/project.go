@@ -234,13 +234,16 @@ func (p *Project) DeployAndClean() error {
 	return p.Clean()
 }
 
+func (p *Project) defName() string {
+	splittedRole := strings.Split(p.Role, "/")
+	return splittedRole[len(splittedRole)-1]
+}
+
 // check is Role exists
 func (p *Project) checkRole() bool {
-	splittedRole := strings.Split(p.Role, "/")
-	//fmt.Println(splittedRole[len(splittedRole)-1])
-	//roleName := fmt.Sprintf("%s_lambda_function", p.Name)
+	roleName := p.defName()
 	input := &iam.GetRoleInput{
-		RoleName: aws.String(splittedRole[len(splittedRole)-1]),
+		RoleName: aws.String(roleName),
 	}
 	svc := iam.New(p.Session)
 	_, err := svc.GetRole(input)
@@ -255,13 +258,12 @@ func (p *Project) checkRole() bool {
 
 // create role
 func (p *Project) createRole() error {
-	splittedRole := strings.Split(p.Role, "/")
-	//roleName := fmt.Sprintf("%s_lambda_function", p.Name)
+	roleName := p.defName()
 	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
 	svc := iam.New(p.Session)
-	logf("creating IAM %s role", splittedRole[len(splittedRole)-1])
+	logf("creating IAM %s role", roleName
 	_, err := svc.CreateRole(&iam.CreateRoleInput{
-		RoleName:                 &splittedRole[len(splittedRole)-1],
+		RoleName:                 &roleName,
 		AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
 	})
 
