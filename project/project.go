@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"time"
+	"strings"
 )
 
 const (
@@ -233,9 +234,14 @@ func (p *Project) DeployAndClean() error {
 	return p.Clean()
 }
 
+func (p *Project) defName() string {
+	splittedRole := strings.Split(p.Role, "/")
+	return splittedRole[len(splittedRole)-1]
+}
+
 // check is Role exists
 func (p *Project) checkRole() bool {
-	roleName := fmt.Sprintf("%s_lambda_function", p.Name)
+	roleName := p.defName()
 	input := &iam.GetRoleInput{
 		RoleName: aws.String(roleName),
 	}
@@ -252,10 +258,10 @@ func (p *Project) checkRole() bool {
 
 // create role
 func (p *Project) createRole() error {
-	roleName := fmt.Sprintf("%s_lambda_function", p.Name)
+	roleName := p.defName()
 	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
 	svc := iam.New(p.Session)
-	logf("creating IAM %s role", roleName)
+	logf("creating IAM %s role", roleName
 	_, err := svc.CreateRole(&iam.CreateRoleInput{
 		RoleName:                 &roleName,
 		AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
@@ -278,7 +284,7 @@ func (p *Project) createRole() error {
 
 	logf("attaching policy to lambda_function role.")
 	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
-		RoleName:  &roleName,
+		RoleName:  &splittedRole[len(splittedRole)-1],
 		PolicyArn: policy.Policy.Arn,
 	})
 
