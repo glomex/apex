@@ -10,7 +10,7 @@ import (
 )
 
 // Version of program.
-const Version = "1.0.0-glmx"
+const Version = "1.0.1-glmx"
 
 // Command config.
 var Command = &cobra.Command{
