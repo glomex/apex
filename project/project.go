@@ -261,7 +261,7 @@ func (p *Project) createRole() error {
 	roleName := p.defName()
 	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
 	svc := iam.New(p.Session)
-	logf("creating IAM %s role", roleName
+	logf("creating IAM %s role", roleName)
 	_, err := svc.CreateRole(&iam.CreateRoleInput{
 		RoleName:                 &roleName,
 		AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
