@@ -68,6 +68,23 @@ const (
   	]
    }`
 
+	iamEC2Policy = `{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "ec2:CreateNetworkInterface",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DeleteNetworkInterface"
+            ],
+            "Resource": "*"
+        }
+    ]
+}`
 
 )
 
@@ -260,6 +277,7 @@ func (p *Project) checkRole() bool {
 func (p *Project) createRole() error {
 	roleName := p.defName()
 	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
+	policyNameEC2 := fmt.Sprintf("%s_lambda_ec2", p.Name)
 	svc := iam.New(p.Session)
 	logf("creating IAM %s role", roleName)
 	_, err := svc.CreateRole(&iam.CreateRoleInput{
@@ -281,17 +299,42 @@ func (p *Project) createRole() error {
 	if err != nil {
 		return fmt.Errorf("creating policy: %s", err)
 	}
+	logf("creating IAM %s policy", policyNameEC2)
+	policyEC2, err := svc.CreatePolicy(&iam.CreatePolicyInput{
+		PolicyName:     &policyNameEC2,
+		Description:    aws.String("Allow lambda_function to use VPC. Created by apex(1)."),
+		PolicyDocument: aws.String(iamEC2Policy),
+	})
+
+	if err != nil {
+		return fmt.Errorf("creating policy: %s", err)
+	}
+
+
 
 	logf("attaching policy to lambda_function role.")
-	splittedRole := p.defName()
+	//splittedRole := p.defName()
+	logf("RoleName: %s", roleName)
 	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
-		RoleName:  &splittedRole,
+		RoleName:  &roleName,
 		PolicyArn: policy.Policy.Arn,
 	})
 
 	if err != nil {
 		return fmt.Errorf("creating policy: %s", err)
 	}
+
+	logf("attaching policy to lambda_function role.")
+
+	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
+		RoleName:  &roleName,
+		PolicyArn: policyEC2.Policy.Arn,
+	})
+
+	if err != nil {
+		return fmt.Errorf("creating policy: %s", err)
+	}
+
 
 	return nil
 }
