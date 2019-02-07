@@ -7,7 +7,7 @@ import (
 	"github.com/tj/cobra"
 
 	"os"
-
+	"fmt"
 	"apex/cmd/apex/root"
 )
 
@@ -66,6 +66,6 @@ func run(c *cobra.Command, args []string) error {
 		Role:        root.Project.Role,
 		Dir:         dir,
 	}
-
+	fmt.Println(dir)
 	return p.Run(command, args...)
 }

@@ -32,7 +32,7 @@ func (p *Proxy) Run(command string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = p.Dir
-
+	fmt.Println(p.Dir)
 	return cmd.Run()
 }
 
