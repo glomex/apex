@@ -7,7 +7,6 @@ import (
 	"github.com/tj/cobra"
 
 	"os"
-
 	"apex/cmd/apex/root"
 )
 
@@ -66,6 +65,5 @@ func run(c *cobra.Command, args []string) error {
 		Role:        root.Project.Role,
 		Dir:         dir,
 	}
-
 	return p.Run(command, args...)
 }

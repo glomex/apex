@@ -40,7 +40,12 @@ func (p *Proxy) Run(args ...string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Dir = filepath.Join(Dir, p.Environment)
+	cheked_dir := filepath.Join(Dir, p.Environment)
+	if _, err := os.Stat(cheked_dir); !os.IsNotExist(err) {
+		cmd.Dir = filepath.Join(Dir, p.Environment)
+	} else {
+		cmd.Dir = Dir
+	}
 
 	return cmd.Run()
 }
