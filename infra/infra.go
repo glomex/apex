@@ -46,7 +46,6 @@ func (p *Proxy) Run(args ...string) error {
 	} else {
 		cmd.Dir = Dir
 	}
-	fmt.Println(cmd.Dir)
 
 	return cmd.Run()
 }

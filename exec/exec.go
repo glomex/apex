@@ -33,7 +33,7 @@ func (p *Proxy) Run(command string, args ...string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Dir = p.Dir
 	fmt.Println(p.Dir)
-	return cmd.Run()
+
 }
 
 func (p *Proxy) functionEnvVars() (args []string) {
