@@ -99,6 +99,7 @@ type Config struct {
 	KMSKeyArn        string            `json:"kms_arn"`
 	DeadLetterARN    string            `json:"deadletter_arn"`
 	Zip              string            `json:"zip"`
+	Layers					 []*string 				 `json:"layers"`
 }
 
 // Function represents a Lambda function, with configuration loaded
@@ -264,6 +265,8 @@ func (f *Function) Deploy() error {
 
 // DeployCode deploys function code when changed.
 func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput) error {
+	//uh := *f.Layers[0]
+	//fmt.Println(uh)
 	remoteHash := *config.Configuration.CodeSha256
 	localHash := utils.Sha256(zip)
 
@@ -312,6 +315,7 @@ func (f *Function) DeployConfigAndCode(zip []byte) error {
 			SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 			SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 		},
+		Layers:	f.Layers,
 	}
 
 	if f.DeadLetterARN != "" {
@@ -414,6 +418,7 @@ func (f *Function) Create(zip []byte) error {
 			SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 			SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 		},
+		Layers:				f.Layers,
 	}
 
 	if f.DeadLetterARN != "" {
@@ -421,6 +426,9 @@ func (f *Function) Create(zip []byte) error {
 			TargetArn: &f.DeadLetterARN,
 		}
 	}
+	// if f.Layers != "" {
+	// 	params.Layers = f.Layers
+	// }
 
 	created, err := f.Service.CreateFunction(params)
 	if err != nil {
@@ -806,6 +814,7 @@ func (f *Function) configChanged(config *lambda.GetFunctionOutput) bool {
 		Environment      []string
 		KMSKeyArn        string
 		DeadLetterConfig lambda.DeadLetterConfig
+		Layers					[]*string
 	}
 
 	localConfig := &diffConfig{
@@ -821,6 +830,7 @@ func (f *Function) configChanged(config *lambda.GetFunctionOutput) bool {
 			Subnets:        f.VPC.Subnets,
 			SecurityGroups: f.VPC.SecurityGroups,
 		},
+		Layers: f.Layers,
 	}
 
 	if f.DeadLetterARN != "" {
@@ -828,6 +838,10 @@ func (f *Function) configChanged(config *lambda.GetFunctionOutput) bool {
 			TargetArn: &f.DeadLetterARN,
 		}
 	}
+
+	// if f.Layers != "" {
+	// 	localConfig.Layers = labbda.Layers:        f.Layers
+	// }
 
 	remoteConfig := &diffConfig{
 		Description: *config.Configuration.Description,
