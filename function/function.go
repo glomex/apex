@@ -19,7 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/dustin/go-humanize"
+	humanize "github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 	"gopkg.in/validator.v2"
 
@@ -98,8 +98,10 @@ type Config struct {
 	VPC              vpc.VPC           `json:"vpc"`
 	KMSKeyArn        string            `json:"kms_arn"`
 	DeadLetterARN    string            `json:"deadletter_arn"`
+	Region           string            `json:"region"`
+	Edge             bool              `json:"edge"`
 	Zip              string            `json:"zip"`
-	Layers					 []*string 				 `json:"layers"`
+	Layers           []*string         `json:"layers"`
 }
 
 // Function represents a Lambda function, with configuration loaded
@@ -315,7 +317,7 @@ func (f *Function) DeployConfigAndCode(zip []byte) error {
 			SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 			SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 		},
-		Layers:	f.Layers,
+		Layers: f.Layers,
 	}
 
 	if f.DeadLetterARN != "" {
@@ -418,7 +420,7 @@ func (f *Function) Create(zip []byte) error {
 			SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 			SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 		},
-		Layers:				f.Layers,
+		Layers: f.Layers,
 	}
 
 	if f.DeadLetterARN != "" {
@@ -814,7 +816,7 @@ func (f *Function) configChanged(config *lambda.GetFunctionOutput) bool {
 		Environment      []string
 		KMSKeyArn        string
 		DeadLetterConfig lambda.DeadLetterConfig
-		Layers					[]*string
+		Layers           []*string
 	}
 
 	localConfig := &diffConfig{
@@ -937,8 +939,10 @@ func (f *Function) hookDeploy() error {
 // environment for lambda calls.
 func (f *Function) environment() *lambda.Environment {
 	env := make(map[string]*string)
-	for k, v := range f.Environment {
-		env[k] = aws.String(v)
+	if !f.Edge {
+		for k, v := range f.Environment {
+			env[k] = aws.String(v)
+		}
 	}
 	return &lambda.Environment{Variables: env}
 }
@@ -959,4 +963,17 @@ func environ(env map[string]*string) []string {
 	}
 
 	return pairs
+}
+
+// AWSConfig returns AWS configuration if function has specified region.
+func (f *Function) AWSConfig() *aws.Config {
+	region := f.Config.Region
+	if f.Config.Edge {
+		region = "us-east-1"
+	}
+
+	if len(region) > 0 {
+		return aws.NewConfig().WithRegion(region)
+	}
+	return nil
 }

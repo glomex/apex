@@ -9,24 +9,25 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+
 	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/pkg/errors"
 	"github.com/tj/go-sync/semaphore"
-	"gopkg.in/validator.v2"
 
 	//"''apex/function"
 	"apex/function"
 	"apex/hooks"
 	"apex/infra"
+	"apex/service"
 	"apex/utils"
 	"apex/vpc"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"time"
 	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 const (
@@ -53,6 +54,22 @@ const (
       	"Action": "sts:AssumeRole"
     	}
   		]
+	}`
+
+	edgeIamAssumeRolePolicy = `{
+			"Version": "2012-10-17",
+		"Statement": [
+			{
+					"Effect": "Allow",
+					"Principal": {
+						"Service": [
+				"lambda.amazonaws.com",
+				"edgelambda.amazonaws.com"
+			]
+				},
+				"Action": "sts:AssumeRole"
+			}
+			]
 	}`
 
 	iamLogsPolicy = `{
@@ -85,7 +102,6 @@ const (
         }
     ]
 }`
-
 )
 
 // Config for project.
@@ -116,16 +132,12 @@ type Project struct {
 	Environment      string
 	InfraEnvironment string
 	Log              log.Interface
-	Service          lambdaiface.LambdaAPI
+	ServiceProvider  service.Provideriface
 	Functions        []*function.Function
 	IgnoreFile       []byte
 	nameTemplate     *template.Template
-	Session			 *session.Session
-
+	Session          *session.Session
 }
-
-
-
 
 // defaults applies configuration defaults.
 func (p *Project) defaults() {
@@ -280,6 +292,7 @@ func (p *Project) createRole() error {
 	policyNameEC2 := fmt.Sprintf("%s_lambda_ec2", p.Name)
 	svc := iam.New(p.Session)
 	logf("creating IAM %s role", roleName)
+	fmt.Println(p.Functions)
 	_, err := svc.CreateRole(&iam.CreateRoleInput{
 		RoleName:                 &roleName,
 		AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
@@ -310,8 +323,6 @@ func (p *Project) createRole() error {
 		return fmt.Errorf("creating policy: %s", err)
 	}
 
-
-
 	logf("attaching policy to lambda_function role.")
 	//splittedRole := p.defName()
 	logf("RoleName: %s", roleName)
@@ -335,10 +346,8 @@ func (p *Project) createRole() error {
 		return fmt.Errorf("creating policy: %s", err)
 	}
 
-
 	return nil
 }
-
 
 // Deploy functions and their configurations.
 func (p *Project) Deploy() error {
@@ -507,7 +516,6 @@ func (p *Project) LoadFunctionByPath(name, path string) (*function.Function, err
 		},
 		Name:       name,
 		Path:       path,
-		Service:    p.Service,
 		Log:        p.Log,
 		IgnoreFile: p.IgnoreFile,
 		Alias:      p.Alias,
@@ -523,6 +531,7 @@ func (p *Project) LoadFunctionByPath(name, path string) (*function.Function, err
 		return nil, err
 	}
 
+	fn.Service = p.ServiceProvider.NewService(fn.AWSConfig())
 	return fn, nil
 }
 
@@ -585,8 +594,6 @@ func (p *Project) name(fn *function.Function) (string, error) {
 
 	return name, nil
 }
-
-
 
 // readInfraRole reads lambda function IAM role from infrastructure
 func (p *Project) readInfraRole() string {
