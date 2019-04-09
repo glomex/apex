@@ -30,7 +30,6 @@ import (
 	"apex/hooks"
 	"apex/utils"
 	"apex/vpc"
-	"reflect"
 )
 
 // timelessInfo is used to zero mtime which causes function checksums

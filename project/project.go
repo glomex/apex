@@ -229,8 +229,6 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 
 // DeployAndClean deploys functions and then cleans up their build artifacts.
 func (p *Project) DeployAndClean() error {
-	//p.Log.Info(p.Name)
-	//p.Log.Info(p.readInfraRole())
 	if !p.checkRole() {
 		fmt.Println("Role not found, create it")
 		err := p.createRole()
