@@ -5,16 +5,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"text/template"
 	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/pkg/errors"
 	"github.com/tj/go-sync/semaphore"
 	"gopkg.in/validator.v2"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"text/template"
 
 	//"''apex/function"
 	"apex/function"
@@ -23,10 +23,10 @@ import (
 	"apex/utils"
 	"apex/vpc"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"time"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"strings"
+	"time"
 )
 
 const (
@@ -85,7 +85,6 @@ const (
         }
     ]
 }`
-
 )
 
 // Config for project.
@@ -105,6 +104,7 @@ type Config struct {
 	Hooks              hooks.Hooks       `json:"hooks"`
 	VPC                vpc.VPC           `json:"vpc"`
 	Zip                string            `json:"zip"`
+	S3Bucket           string            `json:"s3bucket"`
 }
 
 // Project represents zero or more Lambda functions.
@@ -120,12 +120,8 @@ type Project struct {
 	Functions        []*function.Function
 	IgnoreFile       []byte
 	nameTemplate     *template.Template
-	Session			 *session.Session
-
+	Session          *session.Session
 }
-
-
-
 
 // defaults applies configuration defaults.
 func (p *Project) defaults() {
@@ -268,8 +264,6 @@ func (p *Project) checkRole() bool {
 		return false
 	}
 
-	//fmt.Println(input)
-	//fmt.Println(result)
 	return true
 }
 
@@ -310,8 +304,6 @@ func (p *Project) createRole() error {
 		return fmt.Errorf("creating policy: %s", err)
 	}
 
-
-
 	logf("attaching policy to lambda_function role.")
 	//splittedRole := p.defName()
 	logf("RoleName: %s", roleName)
@@ -335,10 +327,8 @@ func (p *Project) createRole() error {
 		return fmt.Errorf("creating policy: %s", err)
 	}
 
-
 	return nil
 }
-
 
 // Deploy functions and their configurations.
 func (p *Project) Deploy() error {
@@ -355,7 +345,7 @@ func (p *Project) Deploy() error {
 			go func() {
 				defer sem.Release()
 
-				err := fn.Deploy()
+				err := fn.Deploy(p.Session)
 				if err != nil {
 					err = fmt.Errorf("function %s: %s", fn.Name, err)
 				}
@@ -585,8 +575,6 @@ func (p *Project) name(fn *function.Function) (string, error) {
 
 	return name, nil
 }
-
-
 
 // readInfraRole reads lambda function IAM role from infrastructure
 func (p *Project) readInfraRole() string {
