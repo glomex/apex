@@ -17,9 +17,9 @@ import (
 	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
@@ -69,7 +69,7 @@ const (
 	RequestResponse InvocationType = "RequestResponse"
 	Event                          = "Event"
 	DryRun                         = "DryRun"
-	MaxLambdaSize									 = 50000000
+	MaxLambdaSize                  = 50000000
 )
 
 // CurrentAlias name.
@@ -104,8 +104,8 @@ type Config struct {
 	KMSKeyArn        string            `json:"kms_arn"`
 	DeadLetterARN    string            `json:"deadletter_arn"`
 	Zip              string            `json:"zip"`
-	Layers					 []*string 				 `json:"layers"`
-	S3Bucket				 string						 `json:"s3bucket"`
+	Layers           []*string         `json:"layers"`
+	S3Bucket         string            `json:"s3bucket"`
 }
 
 // Function represents a Lambda function, with configuration loaded
@@ -319,7 +319,7 @@ func (f *Function) DeployConfigAndCode(zip []byte, session *session.Session) err
 			SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 			SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 		},
-		Layers:	f.Layers,
+		Layers: f.Layers,
 	}
 
 	if f.DeadLetterARN != "" {
@@ -398,15 +398,15 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 		}
 		fmt.Println(s3bucket, s3key)
 		_, err := s3.New(session).PutObject(&s3.PutObjectInput{
-        Bucket:               aws.String(s3bucket),
-        Key:                  aws.String(s3key),
-        ACL:                  aws.String("private"),
-        Body:                 bytes.NewReader(zip),
-        ContentLength:        aws.Int64(int64(len(zip))),
-        ContentType:          aws.String(http.DetectContentType(zip)),
-        ContentDisposition:   aws.String("attachment"),
-        ServerSideEncryption: aws.String("AES256"),
-    })
+			Bucket:               aws.String(s3bucket),
+			Key:                  aws.String(s3key),
+			ACL:                  aws.String("private"),
+			Body:                 bytes.NewReader(zip),
+			ContentLength:        aws.Int64(int64(len(zip))),
+			ContentType:          aws.String(http.DetectContentType(zip)),
+			ContentDisposition:   aws.String("attachment"),
+			ServerSideEncryption: aws.String("AES256"),
+		})
 		if err != nil {
 			return err
 		}
@@ -414,7 +414,7 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 			FunctionName: &f.FunctionName,
 			Publish:      aws.Bool(true),
 			S3Bucket:     aws.String(s3bucket),
-			S3Key:				aws.String(s3key),
+			S3Key:        aws.String(s3key),
 		}
 	}
 	updated, err := f.Service.UpdateFunctionCode(inputCode)
@@ -457,7 +457,7 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 				SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 				SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 			},
-			Layers:				f.Layers,
+			Layers: f.Layers,
 		}
 	} else {
 		//Safe zip to file, Upload to s3, and set update configuration
@@ -473,15 +473,15 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 		}
 		fmt.Println(s3bucket, s3key)
 		_, err := s3.New(session).PutObject(&s3.PutObjectInput{
-        Bucket:               aws.String(s3bucket),
-        Key:                  aws.String(s3key),
-        ACL:                  aws.String("private"),
-        Body:                 bytes.NewReader(zip),
-        ContentLength:        aws.Int64(int64(len(zip))),
-        ContentType:          aws.String(http.DetectContentType(zip)),
-        ContentDisposition:   aws.String("attachment"),
-        ServerSideEncryption: aws.String("AES256"),
-    })
+			Bucket:               aws.String(s3bucket),
+			Key:                  aws.String(s3key),
+			ACL:                  aws.String("private"),
+			Body:                 bytes.NewReader(zip),
+			ContentLength:        aws.Int64(int64(len(zip))),
+			ContentType:          aws.String(http.DetectContentType(zip)),
+			ContentDisposition:   aws.String("attachment"),
+			ServerSideEncryption: aws.String("AES256"),
+		})
 		if err != nil {
 			return err
 		}
@@ -497,14 +497,14 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 			Publish:      aws.Bool(true),
 			Environment:  f.environment(),
 			Code: &lambda.FunctionCode{
-				S3Bucket:     aws.String(s3bucket),
-				S3Key:				aws.String(s3key),
+				S3Bucket: aws.String(s3bucket),
+				S3Key:    aws.String(s3key),
 			},
 			VpcConfig: &lambda.VpcConfig{
 				SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
 				SubnetIds:        aws.StringSlice(f.VPC.Subnets),
 			},
-			Layers:				f.Layers,
+			Layers: f.Layers,
 		}
 	}
 
@@ -730,8 +730,6 @@ func (f *Function) Build() (io.Reader, error) {
 		return nil, err
 	}
 
-
-
 	paths, err := utils.LoadFiles(f.Path, f.IgnoreFile)
 	if err != nil {
 		return nil, err
@@ -901,7 +899,7 @@ func (f *Function) configChanged(config *lambda.GetFunctionOutput) bool {
 		Environment      []string
 		KMSKeyArn        string
 		DeadLetterConfig lambda.DeadLetterConfig
-		Layers					[]*string
+		Layers           []*string
 	}
 
 	localConfig := &diffConfig{
