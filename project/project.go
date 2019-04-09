@@ -105,6 +105,7 @@ type Config struct {
 	Hooks              hooks.Hooks       `json:"hooks"`
 	VPC                vpc.VPC           `json:"vpc"`
 	Zip                string            `json:"zip"`
+	S3Bucket					 string 					 `json:"s3bucket"`
 }
 
 // Project represents zero or more Lambda functions.
@@ -355,7 +356,7 @@ func (p *Project) Deploy() error {
 			go func() {
 				defer sem.Release()
 
-				err := fn.Deploy()
+				err := fn.Deploy(p.Session)
 				if err != nil {
 					err = fmt.Errorf("function %s: %s", fn.Name, err)
 				}
