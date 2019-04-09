@@ -264,8 +264,6 @@ func (p *Project) checkRole() bool {
 		return false
 	}
 
-	//fmt.Println(input)
-	//fmt.Println(result)
 	return true
 }
 

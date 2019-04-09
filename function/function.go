@@ -304,7 +304,6 @@ func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput, sess
 // DeployConfigAndCode updates config and updates function code.
 func (f *Function) DeployConfigAndCode(zip []byte, session *session.Session) error {
 	f.Log.Info("updating config")
-	fmt.Println("In Deploy Config and Code ", reflect.TypeOf(zip))
 	params := &lambda.UpdateFunctionConfigurationInput{
 		FunctionName: &f.FunctionName,
 		MemorySize:   &f.Memory,
@@ -396,7 +395,6 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 			s3bucket = f.S3Bucket
 			s3key = f.FunctionName + ".zip"
 		}
-		fmt.Println(s3bucket, s3key)
 		_, err := s3.New(session).PutObject(&s3.PutObjectInput{
 			Bucket:               aws.String(s3bucket),
 			Key:                  aws.String(s3key),
@@ -471,7 +469,7 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 			s3bucket = f.S3Bucket
 			s3key = f.FunctionName + ".zip"
 		}
-		fmt.Println(s3bucket, s3key)
+
 		_, err := s3.New(session).PutObject(&s3.PutObjectInput{
 			Bucket:               aws.String(s3bucket),
 			Key:                  aws.String(s3key),
@@ -724,7 +722,6 @@ func (f *Function) Build() (io.Reader, error) {
 
 	buf := new(bytes.Buffer)
 	zip := archive.NewZip(buf)
-	//fmt.Println("Len of zip ", zip.Len())
 
 	if err := f.hookBuild(zip); err != nil {
 		return nil, err
@@ -774,7 +771,6 @@ func (f *Function) Build() (io.Reader, error) {
 	if err := zip.Close(); err != nil {
 		return nil, err
 	}
-	fmt.Println("Len of buf ", buf.Len())
 	return buf, nil
 }
 
