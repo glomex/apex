@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/pkg/errors"
 	"github.com/tj/go-sync/semaphore"
-	"gopkg.in/validator.v2"
 
 	"apex/function"
 	"apex/hooks"

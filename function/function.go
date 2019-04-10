@@ -389,6 +389,12 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 		//Upload to s3, and set update configuration
 		var s3bucket string
 		var s3key string
+
+		if len(f.S3Bucket) < 1 {
+			f.Log.Errorf("Please provide S3Bucket name in function config file")
+			os.Exit(1)
+		}
+
 		if strings.Contains(f.S3Bucket, "/") {
 			tmp := strings.Split(f.S3Bucket, "/")
 			s3bucket = tmp[0]
@@ -463,6 +469,12 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 		//Safe zip to file, Upload to s3, and set update configuration
 		var s3bucket string
 		var s3key string
+
+		if len(f.S3Bucket) < 1 {
+			f.Log.Errorf("Please provide S3Bucket name in function config file")
+			os.Exit(1)
+		}
+
 		if strings.Contains(f.S3Bucket, "/") {
 			tmp := strings.Split(f.S3Bucket, "/")
 			s3bucket = tmp[0]
