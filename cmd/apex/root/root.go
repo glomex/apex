@@ -181,6 +181,7 @@ func Prepare(c *cobra.Command, args []string) error {
 	if dryRun {
 		log.SetLevel(log.WarnLevel)
 		Project.Concurrency = 1
+	}
 
 	Project.ServiceProvider = service.NewProvider(Session, dryRun)
 

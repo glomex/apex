@@ -28,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"gopkg.in/validator.v2"
 )
 
 const (
@@ -291,21 +292,32 @@ func (p *Project) createRole() error {
 	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
 	policyNameEC2 := fmt.Sprintf("%s_lambda_ec2", p.Name)
 	svc := iam.New(p.Session)
-	logf("creating IAM %s role", roleName)
-	fmt.Println(p.Functions)
-	_, err := svc.CreateRole(&iam.CreateRoleInput{
-		RoleName:                 &roleName,
-		AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
-	})
+
+	var err error
+	for _, fn := range p.Functions {
+		if fn.Edge {
+			logf("creating Edge IAM %s role", roleName)
+			_, err = svc.CreateRole(&iam.CreateRoleInput{
+				RoleName:                 &roleName,
+				AssumeRolePolicyDocument: aws.String(edgeIamAssumeRolePolicy),
+			})
+		} else {
+			logf("creating IAM %s role", roleName)
+			_, err = svc.CreateRole(&iam.CreateRoleInput{
+				RoleName:                 &roleName,
+				AssumeRolePolicyDocument: aws.String(iamAssumeRolePolicy),
+			})
+		}
+	}
 
 	if err != nil {
 		return fmt.Errorf("creating role: %s", err)
 	}
 
 	logf("creating IAM %s policy", policyName)
-	policy, err := svc.CreatePolicy(&iam.CreatePolicyInput{
+	_, err = svc.PutRolePolicy(&iam.PutRolePolicyInput{
 		PolicyName:     &policyName,
-		Description:    aws.String("Allow lambda_function to utilize CloudWatchLogs. Created by apex(1)."),
+		RoleName:       &roleName,
 		PolicyDocument: aws.String(iamLogsPolicy),
 	})
 
@@ -313,33 +325,10 @@ func (p *Project) createRole() error {
 		return fmt.Errorf("creating policy: %s", err)
 	}
 	logf("creating IAM %s policy", policyNameEC2)
-	policyEC2, err := svc.CreatePolicy(&iam.CreatePolicyInput{
+	_, err = svc.PutRolePolicy(&iam.PutRolePolicyInput{
 		PolicyName:     &policyNameEC2,
-		Description:    aws.String("Allow lambda_function to use VPC. Created by apex(1)."),
+		RoleName:       &roleName,
 		PolicyDocument: aws.String(iamEC2Policy),
-	})
-
-	if err != nil {
-		return fmt.Errorf("creating policy: %s", err)
-	}
-
-	logf("attaching policy to lambda_function role.")
-	//splittedRole := p.defName()
-	logf("RoleName: %s", roleName)
-	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
-		RoleName:  &roleName,
-		PolicyArn: policy.Policy.Arn,
-	})
-
-	if err != nil {
-		return fmt.Errorf("creating policy: %s", err)
-	}
-
-	logf("attaching policy to lambda_function role.")
-
-	_, err = svc.AttachRolePolicy(&iam.AttachRolePolicyInput{
-		RoleName:  &roleName,
-		PolicyArn: policyEC2.Policy.Arn,
 	})
 
 	if err != nil {
@@ -402,6 +391,41 @@ func (p *Project) Clean() error {
 // Delete functions.
 func (p *Project) Delete() error {
 	p.Log.Debugf("deleting %d functions", len(p.Functions))
+
+	svc := iam.New(p.Session)
+
+	roleName := p.defName()
+	policyName := fmt.Sprintf("%s_lambda_logs", p.Name)
+	policyNameEC2 := fmt.Sprintf("%s_lambda_ec2", p.Name)
+
+	logf("Deletenig %s policy", policyName)
+	_, err := svc.DeleteRolePolicy(&iam.DeleteRolePolicyInput{
+		RoleName:   &roleName,
+		PolicyName: &policyName,
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "deleting policy")
+	}
+
+	logf("Deletenig %s policy", policyNameEC2)
+	_, err = svc.DeleteRolePolicy(&iam.DeleteRolePolicyInput{
+		RoleName:   &roleName,
+		PolicyName: &policyNameEC2,
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "deleting policy")
+	}
+
+	logf("Deletenig %s role", roleName)
+	_, err = svc.DeleteRole(&iam.DeleteRoleInput{
+		RoleName: &roleName,
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "deleting iam role")
+	}
 
 	for _, fn := range p.Functions {
 		if _, err := fn.GetConfig(); err != nil {
