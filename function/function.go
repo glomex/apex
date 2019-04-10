@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"net/http"
+
 	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -24,7 +26,6 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 	"gopkg.in/validator.v2"
-	"net/http"
 
 	"apex/archive"
 	"apex/hooks"
@@ -102,6 +103,8 @@ type Config struct {
 	VPC              vpc.VPC           `json:"vpc"`
 	KMSKeyArn        string            `json:"kms_arn"`
 	DeadLetterARN    string            `json:"deadletter_arn"`
+	Region           string            `json:"region"`
+	Edge             bool              `json:"edge"`
 	Zip              string            `json:"zip"`
 	Layers           []*string         `json:"layers"`
 	S3Bucket         string            `json:"s3bucket"`
@@ -386,6 +389,12 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 		//Upload to s3, and set update configuration
 		var s3bucket string
 		var s3key string
+
+		if len(f.S3Bucket) < 1 {
+			f.Log.Errorf("Please provide S3Bucket name in function config file")
+			os.Exit(1)
+		}
+
 		if strings.Contains(f.S3Bucket, "/") {
 			tmp := strings.Split(f.S3Bucket, "/")
 			s3bucket = tmp[0]
@@ -460,6 +469,12 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 		//Safe zip to file, Upload to s3, and set update configuration
 		var s3bucket string
 		var s3key string
+
+		if len(f.S3Bucket) < 1 {
+			f.Log.Errorf("Please provide S3Bucket name in function config file")
+			os.Exit(1)
+		}
+
 		if strings.Contains(f.S3Bucket, "/") {
 			tmp := strings.Split(f.S3Bucket, "/")
 			s3bucket = tmp[0]
@@ -1017,8 +1032,10 @@ func (f *Function) hookDeploy() error {
 // environment for lambda calls.
 func (f *Function) environment() *lambda.Environment {
 	env := make(map[string]*string)
-	for k, v := range f.Environment {
-		env[k] = aws.String(v)
+	if !f.Edge {
+		for k, v := range f.Environment {
+			env[k] = aws.String(v)
+		}
 	}
 	return &lambda.Environment{Variables: env}
 }
@@ -1039,4 +1056,17 @@ func environ(env map[string]*string) []string {
 	}
 
 	return pairs
+}
+
+// AWSConfig returns AWS configuration if function has specified region.
+func (f *Function) AWSConfig() *aws.Config {
+	region := f.Config.Region
+	if f.Config.Edge {
+		region = "us-east-1"
+	}
+
+	if len(region) > 0 {
+		return aws.NewConfig().WithRegion(region)
+	}
+	return nil
 }
