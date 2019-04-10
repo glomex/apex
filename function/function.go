@@ -14,11 +14,15 @@ import (
 	"strings"
 	"time"
 
+	"net/http"
+
 	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 	"gopkg.in/validator.v2"
@@ -65,6 +69,7 @@ const (
 	RequestResponse InvocationType = "RequestResponse"
 	Event                          = "Event"
 	DryRun                         = "DryRun"
+	MaxLambdaSize                  = 50000000
 )
 
 // CurrentAlias name.
@@ -102,6 +107,7 @@ type Config struct {
 	Edge             bool              `json:"edge"`
 	Zip              string            `json:"zip"`
 	Layers           []*string         `json:"layers"`
+	S3Bucket         string            `json:"s3bucket"`
 }
 
 // Function represents a Lambda function, with configuration loaded
@@ -232,7 +238,7 @@ func (f *Function) Setenv(name, value string) {
 // Deploy generates a zip and creates or deploy the function.
 // If the configuration hasn't been changed it will deploy only code,
 // otherwise it will deploy both configuration and code.
-func (f *Function) Deploy() error {
+func (f *Function) Deploy(session *session.Session) error {
 	f.Log.Debug("deploying")
 
 	zip, err := f.ZipBytes()
@@ -248,7 +254,7 @@ func (f *Function) Deploy() error {
 
 	if e, ok := err.(awserr.Error); ok {
 		if e.Code() == "ResourceNotFoundException" {
-			return f.Create(zip)
+			return f.Create(zip, session)
 		}
 	}
 
@@ -258,17 +264,15 @@ func (f *Function) Deploy() error {
 
 	if f.configChanged(config) {
 		f.Log.Debug("config changed")
-		return f.DeployConfigAndCode(zip)
+		return f.DeployConfigAndCode(zip, session)
 	}
 
 	f.Log.Info("config unchanged")
-	return f.DeployCode(zip, config)
+	return f.DeployCode(zip, config, session)
 }
 
 // DeployCode deploys function code when changed.
-func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput) error {
-	//uh := *f.Layers[0]
-	//fmt.Println(uh)
+func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput, session *session.Session) error {
 	remoteHash := *config.Configuration.CodeSha256
 	localHash := utils.Sha256(zip)
 
@@ -296,13 +300,12 @@ func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput) erro
 		"remote": remoteHash,
 	}).Debug("code changed")
 
-	return f.Update(zip)
+	return f.Update(zip, session)
 }
 
 // DeployConfigAndCode updates config and updates function code.
-func (f *Function) DeployConfigAndCode(zip []byte) error {
+func (f *Function) DeployConfigAndCode(zip []byte, session *session.Session) error {
 	f.Log.Info("updating config")
-
 	params := &lambda.UpdateFunctionConfigurationInput{
 		FunctionName: &f.FunctionName,
 		MemorySize:   &f.Memory,
@@ -331,7 +334,7 @@ func (f *Function) DeployConfigAndCode(zip []byte) error {
 		return err
 	}
 
-	return f.Update(zip)
+	return f.Update(zip, session)
 }
 
 // Delete the function including all its versions
@@ -373,15 +376,48 @@ func (f *Function) GetConfigCurrent() (*lambda.GetFunctionOutput, error) {
 }
 
 // Update the function with the given `zip`.
-func (f *Function) Update(zip []byte) error {
+func (f *Function) Update(zip []byte, session *session.Session) error {
+	var inputCode *lambda.UpdateFunctionCodeInput
 	f.Log.Info("updating function")
-
-	updated, err := f.Service.UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
-		FunctionName: &f.FunctionName,
-		Publish:      aws.Bool(true),
-		ZipFile:      zip,
-	})
-
+	if len(zip) < MaxLambdaSize {
+		inputCode = &lambda.UpdateFunctionCodeInput{
+			FunctionName: &f.FunctionName,
+			Publish:      aws.Bool(true),
+			ZipFile:      zip,
+		}
+	} else {
+		//Upload to s3, and set update configuration
+		var s3bucket string
+		var s3key string
+		if strings.Contains(f.S3Bucket, "/") {
+			tmp := strings.Split(f.S3Bucket, "/")
+			s3bucket = tmp[0]
+			s3key = tmp[1] + "/" + f.FunctionName + ".zip"
+		} else {
+			s3bucket = f.S3Bucket
+			s3key = f.FunctionName + ".zip"
+		}
+		_, err := s3.New(session).PutObject(&s3.PutObjectInput{
+			Bucket:               aws.String(s3bucket),
+			Key:                  aws.String(s3key),
+			ACL:                  aws.String("private"),
+			Body:                 bytes.NewReader(zip),
+			ContentLength:        aws.Int64(int64(len(zip))),
+			ContentType:          aws.String(http.DetectContentType(zip)),
+			ContentDisposition:   aws.String("attachment"),
+			ServerSideEncryption: aws.String("AES256"),
+		})
+		if err != nil {
+			return err
+		}
+		inputCode = &lambda.UpdateFunctionCodeInput{
+			FunctionName: &f.FunctionName,
+			Publish:      aws.Bool(true),
+			S3Bucket:     aws.String(s3bucket),
+			S3Key:        aws.String(s3key),
+		}
+	}
+	updated, err := f.Service.UpdateFunctionCode(inputCode)
 	if err != nil {
 		return err
 	}
@@ -399,28 +435,77 @@ func (f *Function) Update(zip []byte) error {
 }
 
 // Create the function with the given `zip`.
-func (f *Function) Create(zip []byte) error {
+func (f *Function) Create(zip []byte, session *session.Session) error {
 	f.Log.Info("creating function")
+	var params *lambda.CreateFunctionInput
+	if len(zip) < MaxLambdaSize {
+		params = &lambda.CreateFunctionInput{
+			FunctionName: &f.FunctionName,
+			Description:  &f.Description,
+			MemorySize:   &f.Memory,
+			Timeout:      &f.Timeout,
+			Runtime:      &f.Runtime,
+			Handler:      &f.Handler,
+			Role:         &f.Role,
+			KMSKeyArn:    &f.KMSKeyArn,
+			Publish:      aws.Bool(true),
+			Environment:  f.environment(),
+			Code: &lambda.FunctionCode{
+				ZipFile: zip,
+			},
+			VpcConfig: &lambda.VpcConfig{
+				SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
+				SubnetIds:        aws.StringSlice(f.VPC.Subnets),
+			},
+			Layers: f.Layers,
+		}
+	} else {
+		//Safe zip to file, Upload to s3, and set update configuration
+		var s3bucket string
+		var s3key string
+		if strings.Contains(f.S3Bucket, "/") {
+			tmp := strings.Split(f.S3Bucket, "/")
+			s3bucket = tmp[0]
+			s3key = tmp[1] + "/" + f.FunctionName + ".zip"
+		} else {
+			s3bucket = f.S3Bucket
+			s3key = f.FunctionName + ".zip"
+		}
 
-	params := &lambda.CreateFunctionInput{
-		FunctionName: &f.FunctionName,
-		Description:  &f.Description,
-		MemorySize:   &f.Memory,
-		Timeout:      &f.Timeout,
-		Runtime:      &f.Runtime,
-		Handler:      &f.Handler,
-		Role:         &f.Role,
-		KMSKeyArn:    &f.KMSKeyArn,
-		Publish:      aws.Bool(true),
-		Environment:  f.environment(),
-		Code: &lambda.FunctionCode{
-			ZipFile: zip,
-		},
-		VpcConfig: &lambda.VpcConfig{
-			SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
-			SubnetIds:        aws.StringSlice(f.VPC.Subnets),
-		},
-		Layers: f.Layers,
+		_, err := s3.New(session).PutObject(&s3.PutObjectInput{
+			Bucket:               aws.String(s3bucket),
+			Key:                  aws.String(s3key),
+			ACL:                  aws.String("private"),
+			Body:                 bytes.NewReader(zip),
+			ContentLength:        aws.Int64(int64(len(zip))),
+			ContentType:          aws.String(http.DetectContentType(zip)),
+			ContentDisposition:   aws.String("attachment"),
+			ServerSideEncryption: aws.String("AES256"),
+		})
+		if err != nil {
+			return err
+		}
+		params = &lambda.CreateFunctionInput{
+			FunctionName: &f.FunctionName,
+			Description:  &f.Description,
+			MemorySize:   &f.Memory,
+			Timeout:      &f.Timeout,
+			Runtime:      &f.Runtime,
+			Handler:      &f.Handler,
+			Role:         &f.Role,
+			KMSKeyArn:    &f.KMSKeyArn,
+			Publish:      aws.Bool(true),
+			Environment:  f.environment(),
+			Code: &lambda.FunctionCode{
+				S3Bucket: aws.String(s3bucket),
+				S3Key:    aws.String(s3key),
+			},
+			VpcConfig: &lambda.VpcConfig{
+				SecurityGroupIds: aws.StringSlice(f.VPC.SecurityGroups),
+				SubnetIds:        aws.StringSlice(f.VPC.Subnets),
+			},
+			Layers: f.Layers,
+		}
 	}
 
 	if f.DeadLetterARN != "" {
@@ -428,9 +513,6 @@ func (f *Function) Create(zip []byte) error {
 			TargetArn: &f.DeadLetterARN,
 		}
 	}
-	// if f.Layers != "" {
-	// 	params.Layers = f.Layers
-	// }
 
 	created, err := f.Service.CreateFunction(params)
 	if err != nil {
@@ -691,7 +773,6 @@ func (f *Function) Build() (io.Reader, error) {
 	if err := zip.Close(); err != nil {
 		return nil, err
 	}
-
 	return buf, nil
 }
 

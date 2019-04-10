@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/pkg/errors"
 	"github.com/tj/go-sync/semaphore"
+	"gopkg.in/validator.v2"
 
-	//"''apex/function"
 	"apex/function"
 	"apex/hooks"
 	"apex/infra"
@@ -122,6 +122,7 @@ type Config struct {
 	Hooks              hooks.Hooks       `json:"hooks"`
 	VPC                vpc.VPC           `json:"vpc"`
 	Zip                string            `json:"zip"`
+	S3Bucket           string            `json:"s3bucket"`
 }
 
 // Project represents zero or more Lambda functions.
@@ -246,8 +247,6 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 
 // DeployAndClean deploys functions and then cleans up their build artifacts.
 func (p *Project) DeployAndClean() error {
-	//p.Log.Info(p.Name)
-	//p.Log.Info(p.readInfraRole())
 	if !p.checkRole() {
 		fmt.Println("Role not found, create it")
 		err := p.createRole()
@@ -281,8 +280,6 @@ func (p *Project) checkRole() bool {
 		return false
 	}
 
-	//fmt.Println(input)
-	//fmt.Println(result)
 	return true
 }
 
@@ -353,7 +350,7 @@ func (p *Project) Deploy() error {
 			go func() {
 				defer sem.Release()
 
-				err := fn.Deploy()
+				err := fn.Deploy(p.Session)
 				if err != nil {
 					err = fmt.Errorf("function %s: %s", fn.Name, err)
 				}
