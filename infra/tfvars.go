@@ -18,11 +18,11 @@ type ConfigRelation struct {
 // functionVars returns the function variables as terraform -var arguments.
 func (p *Proxy) functionVars() (args []string) {
 
-	args = append(args, "-var")
-	args = append(args, fmt.Sprintf("aws_region=%s", p.Region))
+	// args = append(args, "-var")
+	// args = append(args, fmt.Sprintf("aws_region=%s", p.Region))
 
-	args = append(args, "-var")
-	args = append(args, fmt.Sprintf("apex_environment=%s", p.Environment))
+	// args = append(args, "-var")
+	// args = append(args, fmt.Sprintf("apex_environment=%s", p.Environment))
 
 	if p.Role != "" {
 		args = append(args, "-var")
@@ -67,10 +67,10 @@ func getFunctionArnVars(relations []ConfigRelation) (args []string) {
 // This function is being phased out in favour of apex_function_names
 func getFunctionNameVars(relations []ConfigRelation) (args []string) {
 	log.Debugf("Generating the tfvar apex_function_FUNCTION_name")
-	for _, rel := range relations {
-		args = append(args, "-var")
-		args = append(args, fmt.Sprintf("apex_function_%s_name=%s", rel.Function.Name, *rel.Configuration.FunctionArn))
-	}
+	// for _, rel := range relations {
+	// 	args = append(args, "-var")
+	// 	args = append(args, fmt.Sprintf("apex_function_%s_name=%s", rel.Function.Name, *rel.Configuration.FunctionArn))
+	// }
 	return args
 }
 
