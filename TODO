@@ -1,2 +1,3 @@
 * Add concurency parameter
 * Add lookups for lambda functions env variables (lookup from AWS SSM Parameter Store and system environment variables) 
+* Change update command to use our release
