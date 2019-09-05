@@ -2,3 +2,4 @@
 * Add lookups for lambda functions env variables (lookup from AWS SSM Parameter Store and system environment variables) 
 * Change update command to use our release
 * Modify CreateRole in boot/boot.go to create EC2 related rights(in project/project.go already modified)
+* Add test invoke after deploy
