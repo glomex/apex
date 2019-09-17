@@ -3,3 +3,4 @@
 * Change update command to use our release
 * Modify CreateRole in boot/boot.go to create EC2 related rights(in project/project.go already modified)
 * Add test invoke after deploy
+* Remove node 6.10 (don't support by AWS for now)
