@@ -23,6 +23,8 @@ var credentialsError = `
   use.
 
 `
+// env vars.
+var env string
 
 // Command config.
 var Command = &cobra.Command{
@@ -35,6 +37,8 @@ var Command = &cobra.Command{
 // Initialize.
 func init() {
 	root.Register(Command)
+	f := Command.Flags()
+	f.StringVarP(&env, "env", "e", "", "Set environment name")
 }
 
 // Run command.
@@ -42,7 +46,6 @@ func run(c *cobra.Command, args []string) error {
 	if err := root.Prepare(c, args); err != nil {
 		return err
 	}
-
 	region := root.Config.Region
 	if region == nil {
 		return errors.New(credentialsError)

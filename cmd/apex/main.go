@@ -25,6 +25,7 @@ import (
 	_ "apex/cmd/apex/rollback"
 	_ "apex/cmd/apex/upgrade"
 	_ "apex/cmd/apex/version"
+	_ "apex/cmd/apex/test"
 
 	// plugins
 	_ "apex/plugins/clojure"

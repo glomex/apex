@@ -21,7 +21,7 @@ func Upgrade(version string) error {
 	p := &update.Manager{
 		Command: "apex",
 		Store: &github.Store{
-			Owner:   "apex",
+			Owner:   "glomex",
 			Repo:    "apex",
 			Version: version,
 		},

@@ -24,6 +24,9 @@ var alias string
 // zip path.
 var zip string
 
+// enable check before changing alias
+var validate bool
+
 // example output.
 const example = `
     Deploy all functions
@@ -62,6 +65,7 @@ func init() {
 	f.StringVarP(&alias, "alias", "a", "current", "Function alias")
 	f.StringVarP(&zip, "zip", "z", "", "Zip path")
 	f.IntVarP(&concurrency, "concurrency", "c", 5, "Concurrent deploys")
+	Command.PersistentFlags().BoolVarP(&validate, "validate", "v", false, "Valiadte deployment")
 }
 
 // Run command.
@@ -89,5 +93,5 @@ func run(c *cobra.Command, args []string) error {
 		root.Project.Setenv(k, v)
 	}
 
-	return root.Project.DeployAndClean()
+	return root.Project.DeployAndClean(validate)
 }

@@ -245,7 +245,7 @@ func (p *Project) LoadFunctions(patterns ...string) error {
 }
 
 // DeployAndClean deploys functions and then cleans up their build artifacts.
-func (p *Project) DeployAndClean() error {
+func (p *Project) DeployAndClean(validate bool) error {
 	if !p.checkRole() {
 		fmt.Println("Role not found, create it")
 		err := p.createRole()
@@ -255,7 +255,7 @@ func (p *Project) DeployAndClean() error {
 		}
 		time.Sleep(30 * time.Second)
 	}
-	if err := p.Deploy(); err != nil {
+	if err := p.Deploy(validate); err != nil {
 		return err
 	}
 
@@ -335,7 +335,7 @@ func (p *Project) createRole() error {
 }
 
 // Deploy functions and their configurations.
-func (p *Project) Deploy() error {
+func (p *Project) Deploy(validate bool) error {
 	p.Log.Debugf("deploying %d functions", len(p.Functions))
 
 	sem := make(semaphore.Semaphore, p.Concurrency)
@@ -349,7 +349,7 @@ func (p *Project) Deploy() error {
 			go func() {
 				defer sem.Release()
 
-				err := fn.Deploy(p.Session)
+				err := fn.Deploy(p.Session, validate)
 				if err != nil {
 					err = fmt.Errorf("function %s: %s", fn.Name, err)
 				}
@@ -556,7 +556,7 @@ func (p *Project) LoadFunctionByPath(name, path string) (*function.Function, err
 }
 
 // CreateOrUpdateAlias ensures the given `alias` is available for `version`.
-func (p *Project) CreateOrUpdateAlias(alias, version string) error {
+func (p *Project) CreateOrUpdateAlias(alias, version string, validate bool) error {
 	p.Log.Debugf("updating %d functions", len(p.Functions))
 
 	sem := make(semaphore.Semaphore, p.Concurrency)
@@ -575,7 +575,7 @@ func (p *Project) CreateOrUpdateAlias(alias, version string) error {
 					err = fmt.Errorf("function %s: %s", fn.Name, err)
 				}
 
-				err = fn.CreateOrUpdateAlias(alias, version)
+				err = fn.CreateOrUpdateAlias(alias, version, validate)
 				if err != nil {
 					err = fmt.Errorf("function %s: %s", fn.Name, err)
 				}

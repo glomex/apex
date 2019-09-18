@@ -64,6 +64,6 @@ func run(c *cobra.Command, args []string) error {
 	if err := root.Project.LoadFunctions(args[1:]...); err != nil {
 		return err
 	}
-
-	return root.Project.CreateOrUpdateAlias(alias, version)
+  // Last argument - disable validate on update alias
+	return root.Project.CreateOrUpdateAlias(alias, version, false)
 }

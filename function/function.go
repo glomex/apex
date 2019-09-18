@@ -124,6 +124,10 @@ type Function struct {
 	Alias        string
 }
 
+type Response struct {
+	LambdaReply string `json:"reply"`
+}
+
 // Open the function.json file and prime the config.
 func (f *Function) Open(environment string) error {
 	f.defaults()
@@ -238,7 +242,7 @@ func (f *Function) Setenv(name, value string) {
 // Deploy generates a zip and creates or deploy the function.
 // If the configuration hasn't been changed it will deploy only code,
 // otherwise it will deploy both configuration and code.
-func (f *Function) Deploy(session *session.Session) error {
+func (f *Function) Deploy(session *session.Session, validate bool) error {
 	f.Log.Debug("deploying")
 
 	zip, err := f.ZipBytes()
@@ -254,7 +258,7 @@ func (f *Function) Deploy(session *session.Session) error {
 
 	if e, ok := err.(awserr.Error); ok {
 		if e.Code() == "ResourceNotFoundException" {
-			return f.Create(zip, session)
+			return f.Create(zip, session, validate)
 		}
 	}
 
@@ -264,15 +268,15 @@ func (f *Function) Deploy(session *session.Session) error {
 
 	if f.configChanged(config) {
 		f.Log.Debug("config changed")
-		return f.DeployConfigAndCode(zip, session)
+		return f.DeployConfigAndCode(zip, session, validate)
 	}
 
 	f.Log.Info("config unchanged")
-	return f.DeployCode(zip, config, session)
+	return f.DeployCode(zip, config, session, validate)
 }
 
 // DeployCode deploys function code when changed.
-func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput, session *session.Session) error {
+func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput, session *session.Session, validate bool) error {
 	remoteHash := *config.Configuration.CodeSha256
 	localHash := utils.Sha256(zip)
 
@@ -292,7 +296,7 @@ func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput, sess
 			version = versions[len(versions)-1].Version
 		}
 
-		return f.CreateOrUpdateAlias(f.Alias, *version)
+		return f.CreateOrUpdateAlias(f.Alias, *version, validate)
 	}
 
 	f.Log.WithFields(log.Fields{
@@ -300,11 +304,11 @@ func (f *Function) DeployCode(zip []byte, config *lambda.GetFunctionOutput, sess
 		"remote": remoteHash,
 	}).Debug("code changed")
 
-	return f.Update(zip, session)
+	return f.Update(zip, session, validate)
 }
 
 // DeployConfigAndCode updates config and updates function code.
-func (f *Function) DeployConfigAndCode(zip []byte, session *session.Session) error {
+func (f *Function) DeployConfigAndCode(zip []byte, session *session.Session, validate bool) error {
 	f.Log.Info("updating config")
 	params := &lambda.UpdateFunctionConfigurationInput{
 		FunctionName: &f.FunctionName,
@@ -334,7 +338,7 @@ func (f *Function) DeployConfigAndCode(zip []byte, session *session.Session) err
 		return err
 	}
 
-	return f.Update(zip, session)
+	return f.Update(zip, session, validate)
 }
 
 // Delete the function including all its versions
@@ -376,7 +380,7 @@ func (f *Function) GetConfigCurrent() (*lambda.GetFunctionOutput, error) {
 }
 
 // Update the function with the given `zip`.
-func (f *Function) Update(zip []byte, session *session.Session) error {
+func (f *Function) Update(zip []byte, session *session.Session, validate bool) error {
 	var inputCode *lambda.UpdateFunctionCodeInput
 	f.Log.Info("updating function")
 	if len(zip) < MaxLambdaSize {
@@ -428,7 +432,7 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 		return err
 	}
 
-	if err := f.CreateOrUpdateAlias(f.Alias, *updated.Version); err != nil {
+	if err := f.CreateOrUpdateAlias(f.Alias, *updated.Version, validate); err != nil {
 		return err
 	}
 
@@ -441,7 +445,7 @@ func (f *Function) Update(zip []byte, session *session.Session) error {
 }
 
 // Create the function with the given `zip`.
-func (f *Function) Create(zip []byte, session *session.Session) error {
+func (f *Function) Create(zip []byte, session *session.Session, validate bool) error {
 	f.Log.Info("creating function")
 	var params *lambda.CreateFunctionInput
 	if len(zip) < MaxLambdaSize {
@@ -531,7 +535,7 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 		return err
 	}
 
-	if err := f.CreateOrUpdateAlias(f.Alias, *created.Version); err != nil {
+	if err := f.CreateOrUpdateAlias(f.Alias, *created.Version, validate); err != nil {
 		return err
 	}
 
@@ -544,7 +548,32 @@ func (f *Function) Create(zip []byte, session *session.Session) error {
 }
 
 // CreateOrUpdateAlias attempts creating the alias, or updates if it already exists.
-func (f *Function) CreateOrUpdateAlias(alias, version string) error {
+func (f *Function) CreateOrUpdateAlias(alias, version string, validate bool) error {
+	// Make run test for function before update alias
+	if validate == true {
+		f.Alias = "$LATEST"
+		payload, err := json.Marshal("{apex_test: ping}")
+		var v map[string]interface{}
+	 	reply, _, err := f.Invoke(v, payload)
+	  if err != nil {
+			f.Log.Error("Test function failed")
+			os.Exit(1)
+		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(reply)
+		fmt.Println(buf)
+		var iot Response
+	  err = json.Unmarshal(buf.Bytes(), &iot)
+		if err != nil {
+			f.Log.Error("Test function failed")
+			os.Exit(1)
+		}
+		if iot.LambdaReply != "pong" {
+			f.Log.Error("Test function failed")
+			os.Exit(1)
+		}
+		f.Alias = "current"
+	}
 	_, err := f.Service.CreateAlias(&lambda.CreateAliasInput{
 		FunctionName:    &f.FunctionName,
 		FunctionVersion: &version,
