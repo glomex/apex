@@ -561,7 +561,6 @@ func (f *Function) CreateOrUpdateAlias(alias, version string, validate bool) err
 		}
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(reply)
-		fmt.Println(buf)
 		var iot Response
 	  err = json.Unmarshal(buf.Bytes(), &iot)
 		if err != nil {
