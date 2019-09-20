@@ -63,7 +63,6 @@ func preRun(c *cobra.Command, args []string) error {
 // Run command.
 func run(c *cobra.Command, args []string) error {
 	dec := json.NewDecoder(input())
-
 	root.Project.Alias = alias
 
 	if err := root.Project.LoadFunctions(name); err != nil {
@@ -75,7 +74,6 @@ func run(c *cobra.Command, args []string) error {
 	for {
 		var v map[string]interface{}
 		err := dec.Decode(&v)
-
 		if err == io.EOF {
 			break
 		}
@@ -112,6 +110,5 @@ func input() io.Reader {
 	if isatty.IsTerminal(os.Stdin.Fd()) {
 		return strings.NewReader("{}")
 	}
-
 	return os.Stdin
 }

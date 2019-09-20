@@ -31,6 +31,8 @@ import (
 	"apex/hooks"
 	"apex/utils"
 	"apex/vpc"
+	//"reflect"
+
 )
 
 // timelessInfo is used to zero mtime which causes function checksums
@@ -126,6 +128,10 @@ type Function struct {
 
 type Response struct {
 	LambdaReply string `json:"reply"`
+}
+
+type Payload struct {
+	LambdaReply string `json:"apex_test"`
 }
 
 // Open the function.json file and prime the config.
@@ -552,23 +558,16 @@ func (f *Function) CreateOrUpdateAlias(alias, version string, validate bool) err
 	// Make run test for function before update alias
 	if validate == true {
 		f.Alias = "$LATEST"
-		payload, err := json.Marshal("{apex_test: ping}")
-		var v map[string]interface{}
-	 	reply, _, err := f.Invoke(v, payload)
+		payload := map[string]interface{}{"apex_test": "ping",}
+		reply, _, err := f.Invoke(payload, nil)
 	  if err != nil {
-			f.Log.Error("Test function failed")
+			f.Log.Error("Test function failed error invoke")
 			os.Exit(1)
 		}
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(reply)
-		var iot Response
-	  err = json.Unmarshal(buf.Bytes(), &iot)
-		if err != nil {
-			f.Log.Error("Test function failed")
-			os.Exit(1)
-		}
-		if iot.LambdaReply != "pong" {
-			f.Log.Error("Test function failed")
+		if buf.String() != "\"pong\"" {
+			f.Log.Error("Test function failed wrong answer")
 			os.Exit(1)
 		}
 		f.Alias = "current"
