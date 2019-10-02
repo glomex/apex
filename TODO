@@ -2,3 +2,4 @@
 * Add lookups for lambda functions env variables (lookup from AWS SSM Parameter Store and system environment variables) 
 * Modify CreateRole in boot/boot.go to create EC2 related rights(in project/project.go already modified)
 * Remove node 6.10 (don't support by AWS for now)
+* Check ability to get terraform infra from prepared state file
