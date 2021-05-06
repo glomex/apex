@@ -250,7 +250,7 @@ func (p *Project) DeployAndClean(validate bool) error {
 		fmt.Println("Role not found, create it")
 		err := p.createRole()
 		if err != nil {
-			fmt.Println("Create role faled! Exiting!")
+			fmt.Println("Create role failed! Exiting!")
 			os.Exit(1)
 		}
 		time.Sleep(30 * time.Second)
